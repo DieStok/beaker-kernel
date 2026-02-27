@@ -277,32 +277,38 @@ boolean value which will enable/disable the tool based on the value.",
             "openai": {
                 "import_path": "archytas.models.openai.OpenAIModel",
                 "default_model_name": "gpt-4o-mini",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
             "anthropic": {
                 "import_path": "archytas.models.anthropic.AnthropicModel",
                 "default_model_name": "claude-3-5-sonnet-20241022",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
             "bedrock": {
                 "import_path": "archytas.models.bedrock.BedrockModel",
                 "default_model_name": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
             "gemini": {
                 "import_path": "archytas.models.gemini.GeminiModel",
                 "default_model_name": "gemini-1.5-pro",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
             "groq": {
                 "import_path": "archytas.models.groq.GroqModel",
                 "default_model_name": "llama3-8b-8192",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
             "ollama": {
                 "import_path": "archytas.models.ollama.OllamaModel",
                 "default_model_name": "mistral-nemo",
-                "api_key": ""
+                "api_key": "",
+                "summarization_threshold_pct": 20,
             },
         },
     )
@@ -459,6 +465,14 @@ class Config(ConfigClass):
                 config_obj["model_name"] = self.model_name
             if self.llm_service_token:
                 config_obj["api_key"] = self.llm_service_token
+
+        # Pass through context management env vars to model config
+        env_context_override = os.environ.get('ARCHYTAS_CONTEXT_WINDOW_OVERRIDE')
+        if env_context_override:
+            config_obj["context_window_override"] = int(env_context_override)
+        env_summ_pct = os.environ.get('ARCHYTAS_SUMMARIZATION_THRESHOLD_PCT')
+        if env_summ_pct:
+            config_obj["summarization_threshold_pct"] = int(env_summ_pct)
 
         # import_path key is required. If we don't have one, we don't have a valid provider.
         if not "import_path" in config_obj:

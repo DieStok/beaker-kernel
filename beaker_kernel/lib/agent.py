@@ -1,4 +1,5 @@
 import logging
+import os
 import typing
 
 from archytas.react import ReActAgent
@@ -42,6 +43,20 @@ class BeakerAgent(ReActAgent):
                 tools.append(integration)
                 # if integration.tools:
                     # tools.extend(integration.tools)
+
+        # Read agent-level context management settings from env vars
+        max_react_steps_str = os.environ.get('ARCHYTAS_MAX_REACT_STEPS')
+        max_errors_str = os.environ.get('ARCHYTAS_MAX_ERRORS')
+        if max_react_steps_str:
+            try:
+                kwargs['max_react_steps'] = int(max_react_steps_str)
+            except ValueError:
+                pass
+        if max_errors_str:
+            try:
+                kwargs['max_errors'] = int(max_errors_str)
+            except ValueError:
+                pass
 
         super().__init__(
             model=model,
