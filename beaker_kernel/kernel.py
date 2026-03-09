@@ -570,6 +570,10 @@ class BeakerKernel(KernelProxyManager):
                 task = asyncio.create_task(self.context.agent.react_async(request, react_context={"message": message}))
                 self.running_actions[request_key] = task
                 result = await task
+                # Collect token usage records from agent (if supported)
+                usage_records = []
+                if hasattr(self.context, 'agent') and hasattr(self.context.agent, 'get_and_reset_usage_records'):
+                    usage_records = self.context.agent.get_and_reset_usage_records()
             except AuthenticationError as err:
                 self.send_response(
                     stream="iopub",
@@ -614,11 +618,15 @@ class BeakerKernel(KernelProxyManager):
                         "language": data.get("language"),
                         "code": data.get("content"),
                     }
+                    if usage_records:
+                        stream_content["usage_records"] = usage_records
                     self.send_response(
                         "iopub", "code_cell", stream_content, parent_header=message.header
                     )
                 else:
                     stream_content = {"name": "response_text", "text": f"{data}"}
+                    if usage_records:
+                        stream_content["usage_records"] = usage_records
                     self.send_response(
                         "iopub", "llm_response", stream_content, parent_header=message.header
                     )
@@ -626,6 +634,8 @@ class BeakerKernel(KernelProxyManager):
                 json.JSONDecodeError
             ):  # If response is not a json, it's just text so treat it like text
                 stream_content = {"name": "response_text", "text": f"{result}"}
+                if usage_records:
+                    stream_content["usage_records"] = usage_records
                 self.send_response(
                     "iopub", "llm_response", stream_content, parent_header=message.header
                 )
